@@ -14,6 +14,9 @@ public:
     string sensorId;
     string type;
     double value;
+    Data(string timeParam, string sensorIdParam, string typeParam, double valueParam)
+        : time(timeParam), sensorId(sensorIdParam), type(typeParam), value(valueParam)
+        {}
 };
 
 #endif
