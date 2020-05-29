@@ -27,8 +27,8 @@ using namespace std;
 
 //------------------------------------------------------------- Constantes
 
-const int MAX_DATA_LINES = 100;
-const int MAX_SENSORS_LINES = 20;
+const int MAX_DATA_LINES = 1000;
+const int MAX_SENSORS_LINES = 100;
 
 //----------------------------------------------------------------- PUBLIC
 
@@ -39,6 +39,55 @@ const int MAX_SENSORS_LINES = 20;
 //{
 //} //----- Fin de Méthode
 
+    bool Backend::loadSensorsFile() {
+
+
+        int nb_of_lines = 0;
+        ifstream fichier(sensorsFile.c_str());
+
+
+        if(fichier)
+        {
+
+            string ligne; //Une variable pour stocker les lignes lues
+
+            while(getline(fichier, ligne) && nb_of_lines < MAX_SENSORS_LINES) //Tant qu'on n'est pas à la fin, on lit
+            {
+                nb_of_lines++;
+
+                string id = ligne.substr(0,ligne.find(';'));
+                id = id.erase(0,6);
+                ligne.erase(0, ligne.find(";")+1);
+
+                string latitude = ligne.substr(0,ligne.find(';'));
+                ligne.erase(0, ligne.find(";")+1);
+
+                string longitude = ligne.substr(0,ligne.find(';'));
+                ligne.erase(0, ligne.find(";")+1);
+
+                double la = stod(latitude);
+                double lo = stod(longitude);
+                string descr = "";
+
+                Sensor s(id,la, lo, descr);
+                Sensors.push_back(s);
+
+            }
+
+            list <Sensor> :: iterator it;
+            for(it = Sensors.begin(); it != Sensors.end(); ++it)
+                cout  << (*it).id << '|' << (*it).latitude << '|' << (*it).longitude << endl;
+            cout << '\n';
+            return true;
+
+        }
+        else
+        {
+          cout << "ERREUR: Impossible d'ouvrir le fichier en lecture." << endl;
+          return false;
+        }
+    }
+
 
 
 
@@ -46,8 +95,7 @@ const int MAX_SENSORS_LINES = 20;
     //Parcourt le fichier des mesures et les stockes.
     {
         int nb_of_lines = 0;
-        string sensorFile = "measurements.csv";
-        ifstream fichier(sensorFile.c_str());
+        ifstream fichier(dataFile.c_str());
 
 
         if(fichier)
@@ -80,12 +128,6 @@ const int MAX_SENSORS_LINES = 20;
                 Data d(date, id, molecule, stod(c));
                 data.push_back(d);
 
-
-                // */
-
-
-
-
             }
 
             list <Data> :: iterator it;
@@ -103,106 +145,45 @@ const int MAX_SENSORS_LINES = 20;
         }
     }
 
-    bool Backend::loadSensorsFile() {
 
-
-        int nb_of_lines = 0;
-        string sensorFile = "Sensors.csv";
-        ifstream fichier(sensorFile.c_str());
-
-
-        if(fichier)
-        {
-            //L'ouverture s'est bien passée, on peut donc lire
-
-            string ligne; //Une variable pour stocker les lignes lues
-
-            while(getline(fichier, ligne) && nb_of_lines < MAX_SENSORS_LINES) //Tant qu'on n'est pas à la fin, on lit
-            {
-                nb_of_lines++;
-                //cout << ligne << endl;
-
-                // /*
-                string id = ligne.substr(0,ligne.find(';'));
-                id = id.erase(0,6);
-                //cout << "id = " << id << endl;
-                ligne.erase(0, ligne.find(";")+1);
-
-                string latitude = ligne.substr(0,ligne.find(';'));
-                //cout << "latitude =" <<  latitude << endl;
-                ligne.erase(0, ligne.find(";")+1);
-
-                string longitude = ligne.substr(0,ligne.find(';'));
-                //cout << "longitude = " << longitude << endl;
-                ligne.erase(0, ligne.find(";")+1);
-
-                double la = stod(latitude);
-                double lo = stod(longitude);
-                string descr = "";
-
-                Sensor s(id,la, lo, descr);
-                Sensors.push_back(s);
-                // */
-
-
-
-
-            }
-
-            list <Sensor> :: iterator it;
-            for(it = Sensors.begin(); it != Sensors.end(); ++it)
-                cout  << (*it).id << '|' << (*it).latitude << '|' << (*it).longitude << endl;
-            cout << '\n';
-            return true;
-
-        }
-        else
-        {
-          cout << "ERREUR: Impossible d'ouvrir le fichier en lecture." << endl;
-          return false;
-        }
-    }
-
-
-
-
-    bool Backend::loadDataFileAfter(string dateRef)
-    //Parcourt le fichier des mesures et les stockes.
+    bool Backend::loadDataFileBetween(string dateDebut, string dateFin)
     {
-        int nb_of_lines = 0;
-        string sensorFile = "measurements.csv";
-        ifstream fichier(sensorFile.c_str());
+        ifstream fichier(dataFile.c_str());
 
+        cout << dateFin << endl;
 
         if(fichier)
         {
-            //L'ouverture s'est bien passée, on peut donc lire
 
             string ligne; //Une variable pour stocker les lignes lues
 
             while(getline(fichier, ligne)) //Tant qu'on n'est pas à la fin, on lit
             {
-                nb_of_lines++;
 
                 string date = ligne.substr(0,ligne.find(';'));
                 ligne.erase(0, ligne.find(";")+1);
 
-                if(date > dateRef) {
+                if(date>dateDebut && date < dateFin)
+                {
+                    string id = ligne.substr(0,ligne.find(';'));
+                    id = id.erase(0,6);
+                    ligne.erase(0, ligne.find(";")+1);
 
-                string id = ligne.substr(0,ligne.find(';'));
-                id = id.erase(0,6);
-                ligne.erase(0, ligne.find(";")+1);
+                    string molecule = ligne.substr(0,ligne.find(';'));
+                    ligne.erase(0, ligne.find(";")+1);
 
-                string molecule = ligne.substr(0,ligne.find(';'));
-                ligne.erase(0, ligne.find(";")+1);
+                    string c = ligne.substr(0,ligne.find(';'));
+                    ligne.erase(0, ligne.find(";")+1);
 
-                string c = ligne.substr(0,ligne.find(';'));
-                ligne.erase(0, ligne.find(";")+1);
 
-                Data d(date, id, molecule, stod(c));
-                data.push_back(d);
+
+                    Data d(date, id, molecule, stod(c));
+                    data.push_back(d);
+
 
                 }
+
+
             }
 
             list <Data> :: iterator it;
@@ -220,67 +201,14 @@ const int MAX_SENSORS_LINES = 20;
         }
     }
 
-    bool Backend::loadDataFileIn(pair<string,string> intervalle) {
 
-        int nb_of_lines = 0;
-        string sensorFile = "measurements.csv";
-        ifstream fichier(sensorFile.c_str());
-
-
-        if(fichier)
-        {
-            //L'ouverture s'est bien passée, on peut donc lire
-
-            string ligne; //Une variable pour stocker les lignes lues
-
-            while(getline(fichier, ligne)) //Tant qu'on n'est pas à la fin, on lit
-            {
-                nb_of_lines++;
-
-                string date = ligne.substr(0,ligne.find(';'));
-                ligne.erase(0, ligne.find(";")+1);
-
-                if(date > intervalle.first && intervalle.second > date) {
-
-                string id = ligne.substr(0,ligne.find(';'));
-                id = id.erase(0,6);
-                ligne.erase(0, ligne.find(";")+1);
-
-                string molecule = ligne.substr(0,ligne.find(';'));
-                ligne.erase(0, ligne.find(";")+1);
-
-                string c = ligne.substr(0,ligne.find(';'));
-                ligne.erase(0, ligne.find(";")+1);
-
-                Data d(date, id, molecule, stod(c));
-                data.push_back(d);
-
-                }
-            }
-
-            list <Data> :: iterator it;
-            for(it = data.begin(); it != data.end(); ++it)
-                cout  << (*it).time << '|' << (*it).sensorId << '|' << (*it).type << '|' << (*it).value << endl;
-            cout << '\n';
-
-            return true;
-
-        }
-        else
-        {
-          cout << "ERREUR: Impossible d'ouvrir le fichier en lecture." << endl;
-          return false;
-        }
-
-
-    }
 
     bool Backend::fillData(Zone zone, string dateDebut, string dateFin) {
     //Rempli la liste Data avec les mesures prises dans la zone entre
     //la date de début et la date de fin.
 
-        string sensorFile = "measurements.csv";
-        ifstream fichier(sensorFile.c_str());
+
+        ifstream fichier(dataFile.c_str());
 
 
         if(fichier)
@@ -372,9 +300,14 @@ Backend::Backend ( )
 // Algorithme :
 //
 {
-#ifdef MAP
-    cout << "Appel au constructeur de <Backend>" << endl;
-#endif
+    #ifdef MAP
+        cout << "Appel au constructeur de <Backend>" << endl;
+    #endif
+
+    dataFile = "measurements.csv";
+    sensorsFile = "sensors.csv";
+
+
 } //----- Fin de Backend
 
 

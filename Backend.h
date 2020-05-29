@@ -39,16 +39,35 @@ public:
     bool loadSensorsFile();
 
     bool loadDataFile();
+    // Mode d'emploi :
+    //
+    //  Retrieve MAX_DATA_LINES (set to 1000 by default) number of measurements from dataFile,
+    //  in order to avoid fetching 140K lines of data.
+    //
+    // Contrat :
+    //
+    //
+    //
 
-    bool loadDataFileAfter(string dateRef);
 
-    bool loadDataFileIn(pair<string,string> intervalle);
+    bool loadDataFileBetween(string dateDebut, string dateFin =  "4019-12-31 12:00:01");
+    // Mode d'emploi :
+    //
+    //  Retrieve all measurements between dateDebut and dateFin.
+    //  Can be used to retrieve all measurements after a certain date by setting dateDebut to 0,
+    //  Can be used to retrieve all measurements before a certain date by by not passing anything
+    //  off as this attribute (or by deliberately setting it very high).
+    //
+    // Contrat :
+    //
+    //
+    //
 
     bool fillData(Zone zone, string dateDebut, string dateFin);
 
+    string getDataFile() {return dataFile;}
 
 
-    void hello();
 
     //bool Fill(Zone zone, char* dateStart, char* dateEnd);
     // Donne une liste de données restrictives
@@ -88,6 +107,7 @@ protected:
 //----------------------------------------------------- Attributs protégés
 
     string dataFile;
+    string sensorsFile;
     list<Sensor> Sensors;
     list<Data> data;
 
