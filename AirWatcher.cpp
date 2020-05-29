@@ -1,6 +1,12 @@
 #include <iostream>
+#include <tuple>
+#include <vector>
+#include <algorithm>  
+#include "Sensor.h"
 
 using namespace std;
+
+
 
 /*
 
@@ -24,19 +30,81 @@ Pseudocode:
     - Calculate the atmo index before and after the air cleaner's work
 
 */
+
+struct _Interval{
+
+  int startDate;
+  int endDate;
+
+} typedef Interval;
+
+
+
 void getImpact() {
     
 }
 
-int getAtmo() {
+int getAtmo( vector<tuple<double,double,double,double>> vals, Interval* interval ){
+
+  tuple<double,double,double,double> avg;
+
+  for( tuple<double,double,double,double> t : vals ){
+    get<0>(avg) += get<0>(t);
+    get<1>(avg) += get<1>(t);
+    get<2>(avg) += get<2>(t);
+    get<3>(avg) += get<3>(t);
+      
+  }
+
+  int dur = interval->endDate - interval->startDate;
+
+  get<0>(avg) = get<0>(avg)/dur;
+  get<1>(avg) = get<1>(avg)/dur;
+  get<2>(avg) = get<2>(avg)/dur;
+  get<3>(avg) = get<3>(avg)/dur;
+
+  int maximum = max(
+    max(get<0>(avg),get<1>(avg)),
+    max(get<2>(avg),get<3>(avg))
+  );
+
+  return maximum;
 
 }
 
 double getAverageAirQuality() {
 
 }
+  
 
+int convertDateInt( string date){
+  
+  int MonthDurations[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
+
+  int stMonth = stoi( date.substr(5,6));
+  int stDay = stoi( date.substr(8,9));
+  int st = MonthDurations[stMonth-1] + stDay;
+
+  return st;
+
+}
+
+Interval* getInterval( string start, string end ){
+
+  Interval* interval = new Interval;
+  interval->startDate = convertDateInt(start);
+  interval->endDate = convertDateInt(end);
+
+  return interval;
+
+}
 
 int main() {
-    return 0;
+  
+  Interval* interval = getInterval("2019-01-01","2019-03-01");
+
+  cout << interval->startDate << " + " << interval->endDate << endl;
+
+  return 0;
 }
+
