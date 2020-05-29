@@ -16,6 +16,7 @@
 #include <cstring>
 #include <string>
 #include <stdlib.h>
+#include <tuple>
 
 using namespace std;
 
@@ -41,7 +42,7 @@ const int MAX_SENSORS_LINES = 20;
 
 
 
-    bool Backend::LoadDataFile()
+    bool Backend::loadDataFile()
     //Parcourt le fichier des mesures et les stockes.
     {
         int nb_of_lines = 0;
@@ -163,7 +164,9 @@ const int MAX_SENSORS_LINES = 20;
     }
 
 
-     bool Backend::loadDataFileAfter(string dateRef)
+
+
+    bool Backend::loadDataFileAfter(string dateRef)
     //Parcourt le fichier des mesures et les stockes.
     {
         int nb_of_lines = 0;
@@ -180,9 +183,7 @@ const int MAX_SENSORS_LINES = 20;
             while(getline(fichier, ligne)) //Tant qu'on n'est pas à la fin, on lit
             {
                 nb_of_lines++;
-                //cout << ligne << endl;
 
-                // /*
                 string date = ligne.substr(0,ligne.find(';'));
                 ligne.erase(0, ligne.find(";")+1);
 
@@ -198,17 +199,10 @@ const int MAX_SENSORS_LINES = 20;
                 string c = ligne.substr(0,ligne.find(';'));
                 ligne.erase(0, ligne.find(";")+1);
 
-
-
                 Data d(date, id, molecule, stod(c));
                 data.push_back(d);
 
                 }
-                // */
-
-
-
-
             }
 
             list <Data> :: iterator it;
@@ -225,6 +219,132 @@ const int MAX_SENSORS_LINES = 20;
           return false;
         }
     }
+
+    bool Backend::loadDataFileIn(pair<string,string> intervalle) {
+
+        int nb_of_lines = 0;
+        string sensorFile = "measurements.csv";
+        ifstream fichier(sensorFile.c_str());
+
+
+        if(fichier)
+        {
+            //L'ouverture s'est bien passée, on peut donc lire
+
+            string ligne; //Une variable pour stocker les lignes lues
+
+            while(getline(fichier, ligne)) //Tant qu'on n'est pas à la fin, on lit
+            {
+                nb_of_lines++;
+
+                string date = ligne.substr(0,ligne.find(';'));
+                ligne.erase(0, ligne.find(";")+1);
+
+                if(date > intervalle.first && intervalle.second > date) {
+
+                string id = ligne.substr(0,ligne.find(';'));
+                id = id.erase(0,6);
+                ligne.erase(0, ligne.find(";")+1);
+
+                string molecule = ligne.substr(0,ligne.find(';'));
+                ligne.erase(0, ligne.find(";")+1);
+
+                string c = ligne.substr(0,ligne.find(';'));
+                ligne.erase(0, ligne.find(";")+1);
+
+                Data d(date, id, molecule, stod(c));
+                data.push_back(d);
+
+                }
+            }
+
+            list <Data> :: iterator it;
+            for(it = data.begin(); it != data.end(); ++it)
+                cout  << (*it).time << '|' << (*it).sensorId << '|' << (*it).type << '|' << (*it).value << endl;
+            cout << '\n';
+
+            return true;
+
+        }
+        else
+        {
+          cout << "ERREUR: Impossible d'ouvrir le fichier en lecture." << endl;
+          return false;
+        }
+
+
+    }
+
+    bool Backend::fillData(Zone zone, string dateDebut, string dateFin) {
+    //Rempli la liste Data avec les mesures prises dans la zone entre
+    //la date de début et la date de fin.
+
+        string sensorFile = "measurements.csv";
+        ifstream fichier(sensorFile.c_str());
+
+
+        if(fichier)
+        {
+            //L'ouverture s'est bien passée, on peut donc lire
+
+            string ligne; //Une variable pour stocker les lignes lues
+
+            while(getline(fichier, ligne)) //Tant qu'on n'est pas à la fin, on lit
+            {
+
+                string date = ligne.substr(0,ligne.find(';'));
+                ligne.erase(0, ligne.find(";")+1);
+
+                if(date > dateDebut && date < dateFin) {
+
+                    string id = ligne.substr(0,ligne.find(';'));
+                    id = id.erase(0,6);
+                    ligne.erase(0, ligne.find(";")+1);
+
+                    //on retrouve le capteur
+                    list <Sensor> :: iterator it;
+                    for(it = Sensors.begin(); it != Sensors.end(); ++it)
+                    {
+                        if ((*it).id == id ) {
+
+                            Sensor s = *it;
+
+                            if(zone.IsWithin( s.latitude, s.longitude)) {
+
+                                string molecule = ligne.substr(0,ligne.find(';'));
+                                ligne.erase(0, ligne.find(";")+1);
+
+                                string c = ligne.substr(0,ligne.find(';'));
+                                ligne.erase(0, ligne.find(";")+1);
+
+                                Data d(date, id, molecule, stod(c));
+                                data.push_back(d);
+                            }
+                        break;
+
+                        }
+                    }
+
+
+                }
+            }
+
+            //Affichage
+            list <Data> :: iterator it;
+            for(it = data.begin(); it != data.end(); ++it)
+                cout  << (*it).time << '|' << (*it).sensorId << '|' << (*it).type << '|' << (*it).value << endl;
+            cout << '\n';
+
+            return true;
+
+        }
+        else    {   cout << "ERREUR: Impossible d'ouvrir le fichier en lecture." << endl;return false;}
+    }
+
+
+
+
+
 
 //------------------------------------------------- Surcharge d'opérateurs
 /*

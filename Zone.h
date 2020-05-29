@@ -1,16 +1,16 @@
-#ifndef ZONE_H 
+#ifndef ZONE_H
 #define ZONE_H
 
-#include <string>   
+#include <string>
 
 class Zone {
-        
+
     public:
         double latitude;
         double longitude;
         double radius;
-        
-        
+
+
 
 
         Zone( double lat, double lon, double rad ){
@@ -18,7 +18,9 @@ class Zone {
             longitude = lon;
             radius = rad;
         }
-}
+
+        bool IsWithin(double lat, double lon);
+};
 
 //Check if this works
 inline bool Zone::IsWithin( double lat, double lon ){

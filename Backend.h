@@ -12,10 +12,11 @@
 
 //--------------------------------------------------- Interfaces utilisées
 
-#include<List>
-#include<string>
+#include <List>
+#include <string>
+#include "Zone.h"
 #include "Sensor.h"
-#include"Data.h"
+#include "Data.h"
 
 
 
@@ -35,15 +36,17 @@ class Backend
 
 public:
 //----------------------------------------------------- Méthodes publiques
-    bool LoadDataFile();
-    // Mode d'emploi :
-    //
-    // Contrat :
-    //
+    bool loadSensorsFile();
+
+    bool loadDataFile();
 
     bool loadDataFileAfter(string dateRef);
 
-    bool loadSensorsFile();
+    bool loadDataFileIn(pair<string,string> intervalle);
+
+    bool fillData(Zone zone, string dateDebut, string dateFin);
+
+
 
     void hello();
 
