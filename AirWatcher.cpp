@@ -28,6 +28,14 @@ void getImpact() {
     
 }
 
+int getAtmo() {
+
+}
+
+double getAverageAirQuality() {
+
+}
+
 
 int main() {
     return 0;
