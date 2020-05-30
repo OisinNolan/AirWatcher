@@ -38,12 +38,27 @@ int convertDateInt( string date){
   
   int MonthDurations[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
 
-  int stMonth = stoi( date.substr(5,6));
-  int stDay = stoi( date.substr(8,9));
+  int stMonth = stoi( date.substr(5,2));
+  int stDay = stoi( date.substr(8,2));
   int st = MonthDurations[stMonth-1] + stDay;
 
   return st;
 
+}
+
+string IncrementDayBy( string date, int i)
+{
+  // this can't change months but maybe one day ??
+  // can be used to decrement also if its not the first of the month
+  // should be used with 2 if intended to be used with loadDataFileBetween
+
+  int day = stoi(date.substr(8,2))+i;
+  string s = to_string(day);
+  if( s.length() == 1) s = "0" + s;
+  string newDate = date;
+  newDate.replace(8,2,s);
+
+  return newDate;
 }
 
 struct _Interval{
@@ -110,7 +125,22 @@ void getImpact( string CleanerID) {
   // 1. Calculate radiusen
 
   backend.loadSensorsFile();
-  backend.loadDataFileBetween(AC.start, AC.end);
+  
+  // load values at the start of the duration;
+  string newDate = IncrementDayBy(AC.start,2);
+  backend.loadDataFileBetween(AC.start, newDate);
+  
+  vector<Data> startVal;
+  for( Data d : backend.data ) startVal.push_back(d);
+
+  cout << "------------------------------" << endl;
+
+  backend.data = vector<Data>();
+
+  // load values at the end of the duration
+  newDate = IncrementDayBy(AC.end,2);
+  string endDate = AC.end.replace(11,2,"12"); // this is necessary because I want data from one day and because end date starts at 00:00:00 it complicates things
+  backend.loadDataFileBetween(endDate, newDate);
 
   multimap<int,Sensor> concernedSensors;
   multimap<string,tuple<double,double,double,double>> deltaVals;
@@ -122,12 +152,34 @@ void getImpact( string CleanerID) {
 
     if( distAC < distOC) 
     {
-      concernedSensors.insert(make_pair(distAC,s));
-      //deltaVals.insert(make_pair(s.id,make_tuple(,,,,)))
+      concernedSensors.insert(make_pair(distAC,s));     
+      int index = stoi(s.id)*4;
+      //cout << index << endl;
+      
+      //cout << startVal[index+O3].value << "-+-" << backend.data[index+O3].value << endl;
+
+      tuple<double,double,double,double> t = make_tuple(
+          startVal[index+O3].value - backend.data[index+O3].value ,
+          startVal[index+SO2].value - backend.data[index+SO2].value ,
+          startVal[index+NO2].value - backend.data[index+NO2].value ,
+          startVal[index+PM10].value - backend.data[index+PM10].value
+        );
+      deltaVals.insert(make_pair(s.id,t));
     } 
   }
 
+  cout << "S|O3|SO2|NO2|PM10|" << endl;
 
+  for (multimap<string,tuple<double,double,double,double>>::iterator it = deltaVals.begin(); it != deltaVals.end(); ++it)
+  {
+    cout << it->first << "|";
+    cout << get<O3>(it->second)<< "|";
+    cout << get<SO2>(it->second)<< "|";
+    cout << get<NO2>(it->second)<< "|";
+    cout << get<PM10>(it->second)<< "|";
+    cout << endl;
+  }
+  
 
 }
 
@@ -179,9 +231,11 @@ double getAverageAirQuality() {
 int main() {
   
 
+  //backend.loadDataFileBetween(AC1.start, "2019-02-03 12:00:00");
 
+  //backend.loadSensorsFile();
 
-
+  getImpact("AC1");
 
   return 0;
 }

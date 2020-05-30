@@ -2,6 +2,7 @@
     "files.associations": {
         "*.html": "html",
         "iosfwd": "cpp",
-        "tuple": "cpp"
+        "tuple": "cpp",
+        "iostream": "cpp"
     }
 }

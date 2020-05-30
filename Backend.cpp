@@ -1,16 +1,16 @@
 /*************************************************************************
                            Backend  -  description
                              -------------------
-    début                : $DATE$
+    dï¿½but                : $DATE$
     copyright            : (C) $YEAR$ par $AUTHOR$
     e-mail               : $EMAIL$
 *************************************************************************/
 
-//---------- Réalisation de la classe <Backend> (fichier Backend.cpp) ------------
+//---------- Rï¿½alisation de la classe <Backend> (fichier Backend.cpp) ------------
 
 //---------------------------------------------------------------- INCLUDE
 
-//-------------------------------------------------------- Include système
+//-------------------------------------------------------- Include systï¿½me
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -32,12 +32,12 @@ const int MAX_SENSORS_LINES = 100;
 
 //----------------------------------------------------------------- PUBLIC
 
-//----------------------------------------------------- Méthodes publiques
-// type Backend::Méthode ( liste des paramètres )
+//----------------------------------------------------- Mï¿½thodes publiques
+// type Backend::Mï¿½thode ( liste des paramï¿½tres )
 // Algorithme :
 //
 //{
-//} //----- Fin de Méthode
+//} //----- Fin de Mï¿½thode
 
     bool Backend::loadSensorsFile() {
 
@@ -51,7 +51,7 @@ const int MAX_SENSORS_LINES = 100;
 
             string ligne; //Une variable pour stocker les lignes lues
 
-            while(getline(fichier, ligne) && nb_of_lines < MAX_SENSORS_LINES) //Tant qu'on n'est pas à la fin, on lit
+            while(getline(fichier, ligne) && nb_of_lines < MAX_SENSORS_LINES) //Tant qu'on n'est pas ï¿½ la fin, on lit
             {
                 nb_of_lines++;
 
@@ -74,7 +74,7 @@ const int MAX_SENSORS_LINES = 100;
 
             }
 
-            list <Sensor> :: iterator it;
+            vector <Sensor> :: iterator it;
             for(it = Sensors.begin(); it != Sensors.end(); ++it)
                 cout  << (*it).id << '|' << (*it).latitude << '|' << (*it).longitude << endl;
             cout << '\n';
@@ -100,11 +100,11 @@ const int MAX_SENSORS_LINES = 100;
 
         if(fichier)
         {
-            //L'ouverture s'est bien passée, on peut donc lire
+            //L'ouverture s'est bien passï¿½e, on peut donc lire
 
             string ligne; //Une variable pour stocker les lignes lues
 
-            while(getline(fichier, ligne) && nb_of_lines < MAX_DATA_LINES) //Tant qu'on n'est pas à la fin, on lit
+            while(getline(fichier, ligne) && nb_of_lines < MAX_DATA_LINES) //Tant qu'on n'est pas ï¿½ la fin, on lit
             {
                 nb_of_lines++;
                 //cout << ligne << endl;
@@ -130,7 +130,7 @@ const int MAX_SENSORS_LINES = 100;
 
             }
 
-            list <Data> :: iterator it;
+            vector <Data> :: iterator it;
             for(it = data.begin(); it != data.end(); ++it)
                 cout  << (*it).time << '|' << (*it).sensorId << '|' << (*it).type << '|' << (*it).value << endl;
             cout << '\n';
@@ -157,10 +157,10 @@ const int MAX_SENSORS_LINES = 100;
 
             string ligne; //Une variable pour stocker les lignes lues
 
-            while(getline(fichier, ligne)) //Tant qu'on n'est pas à la fin, on lit
+            while(getline(fichier, ligne)) //Tant qu'on n'est pas ï¿½ la fin, on lit
             {
-
                 string date = ligne.substr(0,ligne.find(';'));
+
                 ligne.erase(0, ligne.find(";")+1);
 
                 if(date>dateDebut && date < dateFin)
@@ -186,7 +186,7 @@ const int MAX_SENSORS_LINES = 100;
 
             }
 
-            list <Data> :: iterator it;
+            vector <Data> :: iterator it;
             for(it = data.begin(); it != data.end(); ++it)
                 cout  << (*it).time << '|' << (*it).sensorId << '|' << (*it).type << '|' << (*it).value << endl;
             cout << '\n';
@@ -205,7 +205,7 @@ const int MAX_SENSORS_LINES = 100;
 
     bool Backend::fillData(Zone zone, string dateDebut, string dateFin) {
     //Rempli la liste Data avec les mesures prises dans la zone entre
-    //la date de début et la date de fin.
+    //la date de dï¿½but et la date de fin.
 
 
         ifstream fichier(dataFile.c_str());
@@ -213,11 +213,11 @@ const int MAX_SENSORS_LINES = 100;
 
         if(fichier)
         {
-            //L'ouverture s'est bien passée, on peut donc lire
+            //L'ouverture s'est bien passï¿½e, on peut donc lire
 
             string ligne; //Une variable pour stocker les lignes lues
 
-            while(getline(fichier, ligne)) //Tant qu'on n'est pas à la fin, on lit
+            while(getline(fichier, ligne)) //Tant qu'on n'est pas ï¿½ la fin, on lit
             {
 
                 string date = ligne.substr(0,ligne.find(';'));
@@ -230,7 +230,7 @@ const int MAX_SENSORS_LINES = 100;
                     ligne.erase(0, ligne.find(";")+1);
 
                     //on retrouve le capteur
-                    list <Sensor> :: iterator it;
+                    vector <Sensor> :: iterator it;
                     for(it = Sensors.begin(); it != Sensors.end(); ++it)
                     {
                         if ((*it).id == id ) {
@@ -258,7 +258,7 @@ const int MAX_SENSORS_LINES = 100;
             }
 
             //Affichage
-            list <Data> :: iterator it;
+            vector <Data> :: iterator it;
             for(it = data.begin(); it != data.end(); ++it)
                 cout  << (*it).time << '|' << (*it).sensorId << '|' << (*it).type << '|' << (*it).value << endl;
             cout << '\n';
@@ -274,7 +274,7 @@ const int MAX_SENSORS_LINES = 100;
 
 
 
-//------------------------------------------------- Surcharge d'opérateurs
+//------------------------------------------------- Surcharge d'opï¿½rateurs
 /*
 Backend & Backend::operator = ( const Backend & unBackend )
 // Algorithme :
@@ -323,5 +323,5 @@ Backend::~Backend ( )
 
 //------------------------------------------------------------------ PRIVE
 
-//----------------------------------------------------- Méthodes protégées
+//----------------------------------------------------- Mï¿½thodes protï¿½gï¿½es
 
