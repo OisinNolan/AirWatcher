@@ -36,6 +36,12 @@ class Backend
 
 public:
 //----------------------------------------------------- M�thodes publiques
+    
+    // I will add proper getter later maybe ??
+    list<Sensor> Sensors;
+    list<Data> data;
+
+    
     bool loadSensorsFile();
 
     bool loadDataFile();
@@ -108,9 +114,6 @@ protected:
 
     string dataFile;
     string sensorsFile;
-    list<Sensor> Sensors;
-    list<Data> data;
-
 };
 
 //-------------------------------- Autres d�finitions d�pendantes de <Backend>

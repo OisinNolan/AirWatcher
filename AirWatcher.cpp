@@ -1,15 +1,21 @@
 #include <iostream>
 #include <tuple>
 #include <vector>
-#include <algorithm>  
+#include <map>  
 
 
 #include "Sensor.h"
 #include "AirCleaner.h"
+#include "Backend.h"
 #include "Zone.h"
 #include "Atmo.h"
 
 using namespace std;
+
+// Here are some global stuff maybe we can make AirWatcher a real class 
+// and call everyting from a main one day 
+
+Backend backend = Backend();
 
 AirCleaner AC1 = AirCleaner(
   "AC1",
@@ -28,7 +34,17 @@ AirCleaner AC2 = AirCleaner(
   "AirCleaner2");
 
 
+int convertDateInt( string date){
+  
+  int MonthDurations[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
 
+  int stMonth = stoi( date.substr(5,6));
+  int stDay = stoi( date.substr(8,9));
+  int st = MonthDurations[stMonth-1] + stDay;
+
+  return st;
+
+}
 
 struct _Interval{
 
@@ -36,6 +52,16 @@ struct _Interval{
   int endDate;
 
 } typedef Interval;
+
+Interval* getInterval( string start, string end ){
+
+  Interval* interval = new Interval;
+  interval->startDate = convertDateInt(start);
+  interval->endDate = convertDateInt(end);
+
+  return interval;
+
+}
 
 /*
 
@@ -72,17 +98,34 @@ void getImpact( string CleanerID) {
   }
   else if( CleanerID == "AC2" ){
     AC = AC2;
-    OtherC = AC1
+    OtherC = AC1;
   }
   else{
     cout << "CLEANER NOT FOUND" << endl;
     return;
   }
 
-  // 1. Calculate radius
+  Interval* interval = getInterval(AC.start,AC.end); // actually is this useful here not sure
 
-  
+  // 1. Calculate radiusen
 
+  backend.loadSensorsFile();
+  backend.loadDataFileBetween(AC.start, AC.end);
+
+  multimap<int,Sensor> concernedSensors;
+  multimap<string,tuple<double,double,double,double>> deltaVals;
+
+  for( Sensor s : backend.Sensors ){
+
+    double distAC = (AC.longitude - s.longitude)*(AC.longitude - s.longitude) + (AC.latitude - s.latitude)*(AC.latitude - s.latitude);
+    double distOC = (OtherC.longitude - s.longitude)*(OtherC.longitude - s.longitude) + (OtherC.latitude - s.latitude)*(OtherC.latitude - s.latitude);
+
+    if( distAC < distOC) 
+    {
+      concernedSensors.insert(make_pair(distAC,s));
+      //deltaVals.insert(make_pair(s.id,make_tuple(,,,,)))
+    } 
+  }
 
 
 
@@ -129,40 +172,16 @@ double getAverageAirQuality() {
 }
   
 
-int convertDateInt( string date){
-  
-  int MonthDurations[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
 
-  int stMonth = stoi( date.substr(5,6));
-  int stDay = stoi( date.substr(8,9));
-  int st = MonthDurations[stMonth-1] + stDay;
 
-  return st;
 
-}
-
-Interval* getInterval( string start, string end ){
-
-  Interval* interval = new Interval;
-  interval->startDate = convertDateInt(start);
-  interval->endDate = convertDateInt(end);
-
-  return interval;
-
-}
 
 int main() {
   
 
-  Interval* interval = getInterval("2019-01-01","2019-03-01");
 
-  cout << interval->startDate << " + " << interval->endDate << endl;
 
-  int Index = getIndex(O3,1000000);
 
-  cout << Index << endl;
-
-  getImpact( "AC1");
 
   return 0;
 }
