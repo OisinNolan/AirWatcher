@@ -1,6 +1,5 @@
 build:
-	g++ -w -Wfatal-errors \
-	./*.cpp \
+	g++ -w -Wfatal-errors -o exec ./*.cpp 
 	
 
 clean:
