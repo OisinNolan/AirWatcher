@@ -2,11 +2,40 @@
 #include <tuple>
 #include <vector>
 #include <algorithm>  
+
+
 #include "Sensor.h"
+#include "AirCleaner.h"
+#include "Zone.h"
+#include "Atmo.h"
 
 using namespace std;
 
+AirCleaner AC1 = AirCleaner(
+  "AC1",
+  45.333333,
+  1.333333,
+  "2019-02-01 12:00:00",
+  "2019-03-01 00:00:00",
+  "AirCleaner1");
 
+AirCleaner AC2 = AirCleaner(
+  "AC2",
+  46.666667,
+  3.666667,
+  "2019-02-01 12:00:00",
+  "2019-03-01 00:00:00",
+  "AirCleaner2");
+
+
+
+
+struct _Interval{
+
+  int startDate;
+  int endDate;
+
+} typedef Interval;
 
 /*
 
@@ -31,17 +60,32 @@ Pseudocode:
 
 */
 
-struct _Interval{
 
-  int startDate;
-  int endDate;
+void getImpact( string CleanerID) {
 
-} typedef Interval;
+  AirCleaner AC;
+  AirCleaner OtherC;
+
+  if( CleanerID == "AC1" ){
+     AC = AC1; 
+     OtherC = AC2;
+  }
+  else if( CleanerID == "AC2" ){
+    AC = AC2;
+    OtherC = AC1
+  }
+  else{
+    cout << "CLEANER NOT FOUND" << endl;
+    return;
+  }
+
+  // 1. Calculate radius
+
+  
 
 
 
-void getImpact() {
-    
+
 }
 
 int getAtmo( vector<tuple<double,double,double,double>> vals, Interval* interval ){
@@ -49,24 +93,32 @@ int getAtmo( vector<tuple<double,double,double,double>> vals, Interval* interval
   tuple<double,double,double,double> avg;
 
   for( tuple<double,double,double,double> t : vals ){
-    get<0>(avg) += get<0>(t);
-    get<1>(avg) += get<1>(t);
-    get<2>(avg) += get<2>(t);
-    get<3>(avg) += get<3>(t);
+    get<O3>(avg) += get<O3>(t);
+    get<SO2>(avg) += get<SO2>(t);
+    get<NO2>(avg) += get<NO2>(t);
+    get<PM10>(avg) += get<PM10>(t);
       
   }
 
   int dur = interval->endDate - interval->startDate;
 
-  get<0>(avg) = get<0>(avg)/dur;
-  get<1>(avg) = get<1>(avg)/dur;
-  get<2>(avg) = get<2>(avg)/dur;
-  get<3>(avg) = get<3>(avg)/dur;
+  get<O3>(avg) = get<O3>(avg)/dur;
+  get<SO2>(avg) = get<SO2>(avg)/dur;
+  get<NO2>(avg) = get<NO2>(avg)/dur;
+  get<PM10>(avg) = get<PM10>(avg)/dur;
 
-  int maximum = max(
-    max(get<0>(avg),get<1>(avg)),
-    max(get<2>(avg),get<3>(avg))
-  );
+
+  int index[4] = 
+  {
+    getIndex(O3,get<O3>(avg)),
+    getIndex(SO2,get<O3>(avg)),
+    getIndex(NO2,get<O3>(avg)),
+    getIndex(PM10,get<O3>(avg)),
+  };
+
+  int maximum = index[0];
+
+  for( int i=0; i<3; i++ ) if(  index[i] > maximum ) maximum = index[i];
 
   return maximum;
 
@@ -101,9 +153,16 @@ Interval* getInterval( string start, string end ){
 
 int main() {
   
+
   Interval* interval = getInterval("2019-01-01","2019-03-01");
 
   cout << interval->startDate << " + " << interval->endDate << endl;
+
+  int Index = getIndex(O3,1000000);
+
+  cout << Index << endl;
+
+  getImpact( "AC1");
 
   return 0;
 }

@@ -21,7 +21,7 @@ int MolIndex[4][10] = {
     {0,7,14,21,28,35,42,50,65,80 }          // PM10
 };
 
-inline int getIndex( Molecule m, int val ){
+int getIndex( Molecule m, int val ){
 
     for( int i=0;i<9; i++ ){
 

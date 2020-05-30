@@ -24,6 +24,8 @@ class AirCleaner {
 
         }
 
+        AirCleaner(){};
+
 };
 
 #endif
