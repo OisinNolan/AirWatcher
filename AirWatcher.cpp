@@ -120,11 +120,13 @@ void getImpact( string CleanerID) {
     double distAC = (AC.longitude - s.longitude)*(AC.longitude - s.longitude) + (AC.latitude - s.latitude)*(AC.latitude - s.latitude);
     double distOC = (OtherC.longitude - s.longitude)*(OtherC.longitude - s.longitude) + (OtherC.latitude - s.latitude)*(OtherC.latitude - s.latitude);
 
+    
+
     if( distAC < distOC) 
     {
       concernedSensors.insert(make_pair(distAC,s));
       //deltaVals.insert(make_pair(s.id,make_tuple(,,,,)))
-    } 
+    }
   }
 
 
