@@ -5,6 +5,7 @@
 #define DATA_H
 
 #include <string>
+#include <iostream>
 
 using namespace std;
 
@@ -17,6 +18,13 @@ public:
     Data(string timeParam, string sensorIdParam, string typeParam, double valueParam)
         : time(timeParam), sensorId(sensorIdParam), type(typeParam), value(valueParam)
         {}
+
+    friend ostream& operator<<(ostream& os, const Data& d){
+         os << d.sensorId << "|" << d.type << "|" << d.value;
+        return os;
+    }
+
 };
+
 
 #endif

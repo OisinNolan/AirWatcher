@@ -12,7 +12,7 @@
 
 //--------------------------------------------------- Interfaces utilis�es
 
-#include <list>
+#include <vector>
 #include <string>
 #include "Zone.h"
 #include "Sensor.h"
@@ -38,8 +38,8 @@ public:
 //----------------------------------------------------- M�thodes publiques
     
     // I will add proper getter later maybe ??
-    list<Sensor> Sensors;
-    list<Data> data;
+    vector<Sensor> Sensors;
+    vector<Data> data;
 
     
     bool loadSensorsFile();
