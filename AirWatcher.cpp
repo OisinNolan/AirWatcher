@@ -38,8 +38,7 @@ AirCleaner AC2 = AirCleaner(
 
 int convertDateInt( string date){
   
-  int MonthDurations[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
-
+  const int MonthDurations[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
   int stMonth = stoi( date.substr(5,2));
   int stDay = stoi( date.substr(8,2));
   int st = MonthDurations[stMonth-1] + stDay;
@@ -48,8 +47,7 @@ int convertDateInt( string date){
 
 }
 
-string IncrementDayBy( string date, int i)
-{
+string IncrementDayBy( string date, int i){
   // this can't change months but maybe one day ??
   // can be used to decrement also if its not the first of the month
   // should be used with 2 if intended to be used with loadDataFileBetween
@@ -59,6 +57,31 @@ string IncrementDayBy( string date, int i)
   if( s.length() == 1) s = "0" + s;
   string newDate = date;
   newDate.replace(8,2,s);
+
+  return newDate;
+}
+
+string DecrementDayBy( string date, int i){
+  // this should be able to go to month before
+  // can't go back 2 months
+  // we got data for a year so january is off limits
+
+  const int MonthDayNumbers[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
+
+  string m ="";
+
+  int day = stoi(date.substr(8,2))-i;
+  if( day <= 0 ){
+    int month = stoi(date.substr(5,2))-1;
+    day = day + MonthDayNumbers[month-1];
+    m = to_string(month);
+    if( m.length() == 1) m = "0" + m;
+  }
+  string s = to_string(day);
+  if( s.length() == 1) s = "0" + s;
+  string newDate = date;
+  newDate.replace(8,2,s);
+  if( m.length() != 0  )newDate.replace(5,2,m);
 
   return newDate;
 }
@@ -129,8 +152,8 @@ void getImpact( string CleanerID) {
   backend.loadSensorsFile();
   
   // load values at the start of the duration;
-  string newDate = IncrementDayBy(AC.start,2);
-  backend.loadDataFileBetween(AC.start, newDate);
+  string newDate = DecrementDayBy(AC.start,2);
+  backend.loadDataFileBetween(newDate, AC.start);
   
   vector<Data> startVal;
   for( Data d : backend.data ) startVal.push_back(d);
@@ -140,9 +163,9 @@ void getImpact( string CleanerID) {
   backend.data = vector<Data>();
 
   // load values at the end of the duration
-  newDate = IncrementDayBy(AC.end,2);
   string endDate = AC.end.replace(11,2,"12"); // this is necessary because I want data from one day and because end date starts at 00:00:00 it complicates things
-  backend.loadDataFileBetween(endDate, newDate);
+  newDate = DecrementDayBy(AC.end,2);
+  backend.loadDataFileBetween(newDate,endDate);
 
   multimap<double,Sensor> concernedSensors;  // first int is distance between Sensor <-> Cleaner
   multimap<string,moltup> deltaVals; // first string is Sensor.id
@@ -161,10 +184,10 @@ void getImpact( string CleanerID) {
       //cout << startVal[index+O3].value << "-+-" << backend.data[index+O3].value << endl;
 
       moltup t = make_tuple(
-          startVal[index+O3].value - backend.data[index+O3].value ,
-          startVal[index+SO2].value - backend.data[index+SO2].value ,
-          startVal[index+NO2].value - backend.data[index+NO2].value ,
-          startVal[index+PM10].value - backend.data[index+PM10].value
+          backend.data[index+O3].value - startVal[index+O3].value ,
+          backend.data[index+SO2].value - startVal[index+SO2].value,
+          backend.data[index+NO2].value - startVal[index+NO2].value,
+          backend.data[index+PM10].value - startVal[index+PM10].value
         );
       deltaVals.insert(make_pair(s.id,t));
     } 
@@ -260,7 +283,7 @@ int main() {
 
   //backend.loadSensorsFile();
 
-  getImpact("AC1");
+  getImpact("AC2");
 
   return 0;
 }
