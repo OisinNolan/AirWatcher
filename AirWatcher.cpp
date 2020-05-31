@@ -15,6 +15,8 @@ using namespace std;
 // Here are some global stuff maybe we can make AirWatcher a real class 
 // and call everyting from a main one day 
 
+typedef tuple<double,double,double,double> moltup;
+
 Backend backend = Backend();
 
 AirCleaner AC1 = AirCleaner(
@@ -142,8 +144,8 @@ void getImpact( string CleanerID) {
   string endDate = AC.end.replace(11,2,"12"); // this is necessary because I want data from one day and because end date starts at 00:00:00 it complicates things
   backend.loadDataFileBetween(endDate, newDate);
 
-  multimap<int,Sensor> concernedSensors;
-  multimap<string,tuple<double,double,double,double>> deltaVals;
+  multimap<double,Sensor> concernedSensors;  // first int is distance between Sensor <-> Cleaner
+  multimap<string,moltup> deltaVals; // first string is Sensor.id
 
   for( Sensor s : backend.Sensors ){
 
@@ -158,7 +160,7 @@ void getImpact( string CleanerID) {
       
       //cout << startVal[index+O3].value << "-+-" << backend.data[index+O3].value << endl;
 
-      tuple<double,double,double,double> t = make_tuple(
+      moltup t = make_tuple(
           startVal[index+O3].value - backend.data[index+O3].value ,
           startVal[index+SO2].value - backend.data[index+SO2].value ,
           startVal[index+NO2].value - backend.data[index+NO2].value ,
@@ -168,9 +170,10 @@ void getImpact( string CleanerID) {
     } 
   }
 
+  /*
+  // This is all the data from all the concerned sensors
   cout << "S|O3|SO2|NO2|PM10|" << endl;
-
-  for (multimap<string,tuple<double,double,double,double>>::iterator it = deltaVals.begin(); it != deltaVals.end(); ++it)
+  for (multimap<string,moltup>::iterator it = deltaVals.begin(); it != deltaVals.end(); ++it)
   {
     cout << it->first << "|";
     cout << get<O3>(it->second)<< "|";
@@ -179,15 +182,37 @@ void getImpact( string CleanerID) {
     cout << get<PM10>(it->second)<< "|";
     cout << endl;
   }
+  */
+
+  cout << "|Distance|Id|O3|SO2|NO2|PM10|" << endl;
+  // we will traverse the sensors one by one sorted by their distance to cleaner
+  // distance is actually distance squared but no need to take its square root
+  // if we are using it to only sort but later to calculate the radius we'll need to
+  for( multimap<double,Sensor>::iterator it = concernedSensors.begin(); it != concernedSensors.end(); ++it )
+  {
+    Sensor s = it->second;
+    cout << it->first << "|" <<s.id << "|";
+
+    // now let's print the data by distance
+
+    moltup t = deltaVals.find(s.id)->second;
+    cout << get<O3>(t)<< "|";
+    cout << get<SO2>(t)<< "|";
+    cout << get<NO2>(t)<< "|";
+    cout << get<PM10>(t)<< "|";
+    cout << endl;
+    
+
+  }
   
 
 }
 
-int getAtmo( vector<tuple<double,double,double,double>> vals, Interval* interval ){
+int getAtmo( vector<moltup> vals, Interval* interval ){
 
-  tuple<double,double,double,double> avg;
+  moltup avg;
 
-  for( tuple<double,double,double,double> t : vals ){
+  for( moltup t : vals ){
     get<O3>(avg) += get<O3>(t);
     get<SO2>(avg) += get<SO2>(t);
     get<NO2>(avg) += get<NO2>(t);
