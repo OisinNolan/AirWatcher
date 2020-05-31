@@ -35,6 +35,14 @@ AirCleaner AC2 = AirCleaner(
   "2019-03-01 00:00:00",
   "AirCleaner2");
 
+struct _Interval{
+
+  int startDate;
+  int endDate;
+
+} typedef Interval;
+
+int getAtmo( vector<moltup> vals, Interval* interval );
 
 int convertDateInt( string date){
   
@@ -86,12 +94,7 @@ string DecrementDayBy( string date, int i){
   return newDate;
 }
 
-struct _Interval{
 
-  int startDate;
-  int endDate;
-
-} typedef Interval;
 
 Interval* getInterval( string start, string end ){
 
@@ -144,8 +147,6 @@ void getImpact( string CleanerID) {
     cout << "CLEANER NOT FOUND" << endl;
     return;
   }
-
-  Interval* interval = getInterval(AC.start,AC.end); // actually is this useful here not sure
 
   // 1. Calculate radiusen
 
@@ -214,20 +215,47 @@ void getImpact( string CleanerID) {
   for( multimap<double,Sensor>::iterator it = concernedSensors.begin(); it != concernedSensors.end(); ++it )
   {
     Sensor s = it->second;
-    cout << it->first << "|" <<s.id << "|";
-
-    // now let's print the data by distance
-
     moltup t = deltaVals.find(s.id)->second;
+    
+    cout << it->first << "|" <<s.id << "|";
     cout << get<O3>(t)<< "|";
     cout << get<SO2>(t)<< "|";
     cout << get<NO2>(t)<< "|";
     cout << get<PM10>(t)<< "|";
     cout << endl;
-    
-
+  
   }
   
+  // I am not really sure yet how to get the radius so 
+  // I'll assume we got the radius to continue
+  double radius;
+  string lastSensorId;
+
+  // not sure if we need a radius tbh 
+  // we can just cut off at certain point for the calculations
+  Zone zone = Zone(AC.latitude,AC.longitude,radius); // and don't really need this tbh
+
+  // we need all the data for ATMO
+  backend.data.clear();
+  backend.loadDataFileBetween(AC.start,AC.end);
+
+  // we can find the indexes and stuff
+
+  vector<moltup> ATMOvals;
+
+  for( multimap<double,Sensor>::iterator it = concernedSensors.begin(); it != concernedSensors.end(); ++it )
+  {
+    // Well this dosent work yet
+    // need to find the places of concerned sensors in backend.data
+    // then add all that data in to the vector you were getting bs values because you were using delta vals instead
+    ATMOvals.push_back(t);  
+  }
+
+  Interval* interval = getInterval(AC.start,AC.end);
+
+  int Atmo = getAtmo(ATMOvals,interval);
+
+  cout << "ATMO Index =" <<  Atmo << endl;
 
 }
 
@@ -235,7 +263,9 @@ int getAtmo( vector<moltup> vals, Interval* interval ){
 
   moltup avg;
 
+  // Actually we can pass a addes vector but oh well
   for( moltup t : vals ){
+    cout << get<O3>(t) << endl;
     get<O3>(avg) += get<O3>(t);
     get<SO2>(avg) += get<SO2>(t);
     get<NO2>(avg) += get<NO2>(t);
@@ -245,11 +275,14 @@ int getAtmo( vector<moltup> vals, Interval* interval ){
 
   int dur = interval->endDate - interval->startDate;
 
+  cout << get<O3>(avg) << " dur = " << dur << endl;
+
   get<O3>(avg) = get<O3>(avg)/dur;
   get<SO2>(avg) = get<SO2>(avg)/dur;
   get<NO2>(avg) = get<NO2>(avg)/dur;
   get<PM10>(avg) = get<PM10>(avg)/dur;
 
+  //cout << getIndex(O3,get<O3>(avg)) << endl ;
 
   int index[4] = 
   {
@@ -261,8 +294,12 @@ int getAtmo( vector<moltup> vals, Interval* interval ){
 
   int maximum = index[0];
 
-  for( int i=0; i<3; i++ ) if(  index[i] > maximum ) maximum = index[i];
-
+  for( int i=0; i<4; i++ ){
+    
+    cout << index[i] << endl;  
+    
+    if(  index[i] > maximum ) maximum = index[i];
+  } 
   return maximum;
 
 }
@@ -283,7 +320,9 @@ int main() {
 
   //backend.loadSensorsFile();
 
-  getImpact("AC2");
+  getImpact("AC1");
+
+  //backend.loadDataFileBetween(AC2.start,AC2.end);
 
   return 0;
 }
