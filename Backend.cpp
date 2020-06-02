@@ -74,10 +74,13 @@ const int MAX_SENSORS_LINES = 100;
 
             }
 
+            /*
             vector <Sensor> :: iterator it;
             for(it = Sensors.begin(); it != Sensors.end(); ++it)
                 cout  << (*it).id << '|' << (*it).latitude << '|' << (*it).longitude << endl;
             cout << '\n';
+            */
+
             return true;
 
         }
@@ -130,10 +133,12 @@ const int MAX_SENSORS_LINES = 100;
 
             }
 
+            /*
             vector <Data> :: iterator it;
             for(it = data.begin(); it != data.end(); ++it)
                 cout  << (*it).time << '|' << (*it).sensorId << '|' << (*it).type << '|' << (*it).value << endl;
             cout << '\n';
+            */
 
             return true;
 
@@ -186,10 +191,12 @@ const int MAX_SENSORS_LINES = 100;
 
             }
 
+            /*
             vector <Data> :: iterator it;
             for(it = data.begin(); it != data.end(); ++it)
                 cout  << (*it).time << '|' << (*it).sensorId << '|' << (*it).type << '|' << (*it).value << endl;
             cout << '\n';
+            */
 
             return true;
 
@@ -304,8 +311,8 @@ Backend::Backend ( )
         cout << "Appel au constructeur de <Backend>" << endl;
     #endif
 
-    dataFile = "measurements.csv";
-    sensorsFile = "sensors.csv";
+    dataFile = "csv/measurements.csv";
+    sensorsFile = "csv/sensors.csv";
 
 
 } //----- Fin de Backend

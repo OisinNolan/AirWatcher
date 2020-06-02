@@ -25,7 +25,8 @@ AirCleaner AC1 = AirCleaner(
   1.333333,
   "2019-02-01 12:00:00",
   "2019-03-01 00:00:00",
-  "AirCleaner1");
+  "AirCleaner1"
+  );
 
 AirCleaner AC2 = AirCleaner(
   "AC2",
@@ -33,7 +34,8 @@ AirCleaner AC2 = AirCleaner(
   3.666667,
   "2019-02-01 12:00:00",
   "2019-03-01 00:00:00",
-  "AirCleaner2");
+  "AirCleaner2"
+  );
 
 struct _Interval{
 
@@ -171,12 +173,16 @@ void getImpact( string CleanerID) {
   multimap<double,Sensor> concernedSensors;  // first int is distance between Sensor <-> Cleaner
   multimap<string,moltup> deltaVals; // first string is Sensor.id
 
+  // This vector will store tuples containing the gas values from the nearby 'concerned' sensors
+  // on the first day that the air cleaner exists.
+  vector<moltup> startGasVals;
+  // This vector will store such tuples from the final day that the air cleaner exists
+  vector<moltup> endGasVals;
+
   for( Sensor s : backend.Sensors ){
 
     double distAC = (AC.longitude - s.longitude)*(AC.longitude - s.longitude) + (AC.latitude - s.latitude)*(AC.latitude - s.latitude);
     double distOC = (OtherC.longitude - s.longitude)*(OtherC.longitude - s.longitude) + (OtherC.latitude - s.latitude)*(OtherC.latitude - s.latitude);
-
-    
 
     if( distAC < distOC) 
     {
@@ -196,38 +202,60 @@ void getImpact( string CleanerID) {
     } 
   }
 
-  /*
-  // This is all the data from all the concerned sensors
-  cout << "S|O3|SO2|NO2|PM10|" << endl;
-  for (multimap<string,moltup>::iterator it = deltaVals.begin(); it != deltaVals.end(); ++it)
-  {
-    cout << it->first << "|";
-    cout << get<O3>(it->second)<< "|";
-    cout << get<SO2>(it->second)<< "|";
-    cout << get<NO2>(it->second)<< "|";
-    cout << get<PM10>(it->second)<< "|";
-    cout << endl;
-  }
-  */
-
   cout << "|Distance|Id|O3|SO2|NO2|PM10|" << endl;
   // we will traverse the sensors one by one sorted by their distance to cleaner
   // distance is actually distance squared but no need to take its square root
   // if we are using it to only sort but later to calculate the radius we'll need to
+  
+  // This boolean will be false until we find an appropriate cutoff point for our list of sensors.
+  // Once it is true, the loop will stop and we can cut the rest of out list off.
+  multimap<double,Sensor>::iterator cutoffIndex;
+  // this int will store the number of times the one of the elements of moltup t has been > 0
+  // in a row. If this is > 3, we can infer that the impact of the aircleaner is no longer positive
+  // at this distance.
+  int positiveDeltaStreak = 0;
+
   for( multimap<double,Sensor>::iterator it = concernedSensors.begin(); it != concernedSensors.end(); ++it )
   {
     Sensor s = it->second;
     moltup t = deltaVals.find(s.id)->second;
     
-    cout << it->first << "|" <<s.id << "|";
-    cout << get<O3>(t)<< "|";
-    cout << get<SO2>(t)<< "|";
-    cout << get<NO2>(t)<< "|";
-    cout << get<PM10>(t)<< "|";
-    cout << endl;
-  
+    if(get<O3>(t) > 0 || get<SO2>(t) > 0 || get<NO2>(t) > 0 || get<PM10>(t) > 0) {
+      ++positiveDeltaStreak;
+    } else {
+      positiveDeltaStreak = 0;
+    }
+
+    if(positiveDeltaStreak >= 3) {
+      cutoffIndex = it;
+      break;
+    }
   }
-  
+
+  concernedSensors.erase(cutoffIndex, concernedSensors.end());
+
+  for( multimap<double,Sensor>::iterator it = concernedSensors.begin(); it != concernedSensors.end(); ++it )
+  {
+    Sensor s = it->second;
+    int index = stoi(s.id)*4;
+    
+    moltup startGasVal = make_tuple(
+      startVal[index+O3].value ,
+      startVal[index+SO2].value,
+      startVal[index+NO2].value,
+      startVal[index+PM10].value
+    );
+    startGasVals.push_back(startGasVal);
+
+    moltup endGasVal = make_tuple(
+      backend.data[index+O3].value ,
+      backend.data[index+SO2].value,
+      backend.data[index+NO2].value,
+      backend.data[index+PM10].value
+    );
+    endGasVals.push_back(endGasVal);
+  }
+
   // I am not really sure yet how to get the radius so 
   // I'll assume we got the radius to continue
   double radius;
@@ -241,24 +269,15 @@ void getImpact( string CleanerID) {
   backend.data.clear();
   backend.loadDataFileBetween(AC.start,AC.end);
 
-  // we can find the indexes and stuff
+  Interval* interval = new Interval();
+  interval->startDate = 0;
+  interval->endDate = 1;
 
-  vector<moltup> ATMOvals;
+  int startAtmo = getAtmo(startGasVals,interval);
+  int endAtmo = getAtmo(endGasVals,interval);
 
-  for( multimap<double,Sensor>::iterator it = concernedSensors.begin(); it != concernedSensors.end(); ++it )
-  {
-    // Well this dosent work yet
-    // need to find the places of concerned sensors in backend.data
-    // then add all that data in to the vector you were getting bs values because you were using delta vals instead
-    ATMOvals.push_back(t);  
-  }
-
-  Interval* interval = getInterval(AC.start,AC.end);
-
-  int Atmo = getAtmo(ATMOvals,interval);
-
-  cout << "ATMO Index =" <<  Atmo << endl;
-
+  cout << "ATMO Index at start of AirCleaner lifespan = " <<  startAtmo << endl;
+  cout << "ATMO Index at end of AirCleaner lifespan = " <<  endAtmo << endl;
 }
 
 int getAtmo( vector<moltup> vals, Interval* interval ){
@@ -279,12 +298,18 @@ int getAtmo( vector<moltup> vals, Interval* interval ){
 
   cout << get<O3>(avg) << " dur = " << dur << endl;
 
+  // (vals.size) * (interval.duration) == (no. days in timespan) * (no. sensors whose data is in vals)
+  // Because of this we must divide by both vals.size() and interval.duration.
+
+  get<O3>(avg) = get<O3>(avg)/vals.size();
+  get<SO2>(avg) = get<SO2>(avg)/vals.size();
+  get<NO2>(avg) = get<NO2>(avg)/vals.size();
+  get<PM10>(avg) = get<PM10>(avg)/vals.size();
+
   get<O3>(avg) = get<O3>(avg)/dur;
   get<SO2>(avg) = get<SO2>(avg)/dur;
   get<NO2>(avg) = get<NO2>(avg)/dur;
   get<PM10>(avg) = get<PM10>(avg)/dur;
-
-  //cout << getIndex(O3,get<O3>(avg)) << endl ;
 
   int index[4] = 
   {
@@ -297,8 +322,6 @@ int getAtmo( vector<moltup> vals, Interval* interval ){
   int maximum = index[0];
 
   for( int i=0; i<4; i++ ){
-    
-    cout << index[i] << endl;  
     
     if(  index[i] > maximum ) maximum = index[i];
   } 
@@ -322,7 +345,7 @@ int main() {
 
   //backend.loadSensorsFile();
 
-  getImpact("AC1");
+  getImpact("AC2");
 
   //backend.loadDataFileBetween(AC2.start,AC2.end);
 
