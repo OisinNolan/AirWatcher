@@ -57,15 +57,15 @@ int main(){
                 cin >> sensorId;
 
                 string start;
-                cout << "When do you want to start the search? Enter start date: ";
+                cout << "When do you want to start the search? Enter start date in the form YYYY-MM-DD: ";
                 cin >> start;
 
                 string end;
-                cout << "When do you want to end the search? Enter end date: ";
+                cout << "When do you want to end the search? Enter end date in the form YYYY-MM-DD: ";
                 cin >> end;
 
                 double radius;
-                cout << "How far away from Sensor " << sensorId << " do you want to search? Enter radius: ";
+                cout << "How far away from Sensor " << sensorId << " do you want to search? Enter radius in KM: ";
                 cin >> radius;
 
                 int tolerance;
@@ -73,7 +73,7 @@ int main(){
                 cin >> tolerance;
 
                 cout << "\n Sensors that are similar to Sensor " << sensorId << ":\n";
-                cout << "-------------------------------------\n";
+                cout << "----------------------------------------\n";
                 AW.getSimilarSensors(sensorId, start, end, radius, tolerance);
                 break;
             }
