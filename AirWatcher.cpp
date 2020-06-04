@@ -3,12 +3,17 @@
 #include <vector>
 #include <map> 
 #include <set>
+#include <math.h>
+#include <cmath> 
 
 #include "Sensor.h"
 #include "AirCleaner.h"
 #include "Backend.h"
 #include "Zone.h"
 #include "Atmo.h"
+
+// Used to convert lat/long distance unit to km
+#define earthRadiusKm 6371.0
 
 using namespace std;
 
@@ -82,7 +87,21 @@ string DecrementDayBy( string date, int i){
   return newDate;
 }
 
+// Unit conversion function from https://stackoverflow.com/questions/10198985/calculating-the-distance-between-2-latitudes-and-longitudes-that-are-saved-in-a
+double deg2rad(double deg) {
+  return (deg * M_PI / 180);
+}
 
+double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d) {
+  double lat1r, lon1r, lat2r, lon2r, u, v;
+  lat1r = deg2rad(lat1d);
+  lon1r = deg2rad(lon1d);
+  lat2r = deg2rad(lat2d);
+  lon2r = deg2rad(lon2d);
+  u = sin((lat2r - lat1r)/2);
+  v = sin((lon2r - lon1r)/2);
+  return 2.0 * earthRadiusKm * asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
+}
 
 Interval* getInterval( string start, string end ){
 
@@ -94,19 +113,14 @@ Interval* getInterval( string start, string end ){
 
 }
 
-// Returns the square of the distance from (x1,y1) to (x2,y2)
-inline double getDistanceSquared(double x1, double y1, double x2, double y2) {
-  return ((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
-}
-
 // This function returns true if ac is the nearest AirCleaner to Sensor s, and false otherwise
 bool isNearestAirCleaner(AirCleaner ac, Sensor s) {
 
-  double distAc = getDistanceSquared(ac.longitude, ac.latitude, s.longitude, s.latitude);
+  double distAc = distanceEarth(ac.latitude, ac.longitude, s.latitude, s.longitude);
   
   for (auto& it : backend.airCleaners) {
     AirCleaner otherAc = it.second;
-    double distOtherAc = getDistanceSquared(otherAc.longitude, otherAc.latitude, s.longitude, s.latitude);
+    double distOtherAc = distanceEarth(otherAc.latitude, otherAc.longitude, s.latitude, s.longitude);
     if(distOtherAc < distAc) {
       return false;
     }
@@ -137,7 +151,6 @@ Pseudocode:
     - Calculate the atmo index before and after the air cleaner's work
 
 */
-
 
 void getImpact( string cleanerID) {
 
@@ -173,15 +186,15 @@ void getImpact( string cleanerID) {
     // We store dist(AC, s) as well as the change in gas values between start and end of AirCleaner's life.
     if(isNearestAirCleaner(AC, s)) 
     {
-      nearbySensorDistance.insert(make_pair(getDistanceSquared(AC.longitude, AC.latitude, s.longitude, s.latitude),s));     
+      nearbySensorDistance.insert(make_pair(distanceEarth(AC.latitude, AC.longitude, s.latitude, s.longitude),s));     
       int index = stoi(s.id)*4;
 
       moltup t = make_tuple(
-          backend.data[index+O3].value - startVal[index+O3].value ,
-          backend.data[index+SO2].value - startVal[index+SO2].value,
-          backend.data[index+NO2].value - startVal[index+NO2].value,
-          backend.data[index+PM10].value - startVal[index+PM10].value
-        );
+        backend.data[index+O3].value - startVal[index+O3].value ,
+        backend.data[index+SO2].value - startVal[index+SO2].value,
+        backend.data[index+NO2].value - startVal[index+NO2].value,
+        backend.data[index+PM10].value - startVal[index+PM10].value
+      );
       deltaVals.insert(make_pair(s.id,t));
     } 
   }
@@ -270,6 +283,7 @@ void getImpact( string cleanerID) {
 
   cout << "ATMO for month before AirCleaner = " << monthBeforeACAtmo << endl;
   cout << "ATMO for month during AirCleaner = " << monthDuringACAtmo << endl;
+  cout << "Radius = " << radius << "km" << endl;
 
 }
 
