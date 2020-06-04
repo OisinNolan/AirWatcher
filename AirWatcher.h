@@ -25,6 +25,8 @@ enum Molecule{
     PM10,
 };
 
+
+
 inline int getIndex( Molecule m, int val ){
 
     int MolIndex[4][10] = {
@@ -54,20 +56,28 @@ struct _Interval{
 
 } typedef Interval;
 
+
+
 class AirWatcher {
 
+
+
     public:
-      void getImpact( string CleanerID );
-      void getSimilarSensors( Interval interval, Zone zone );
-      AirWatcher();
+
+    void getImpact( string CleanerID );
+    void getSimilarSensors( string sensorId, string start, string end, double radius );
+    void getSimilarSensors();
+    AirWatcher();
 
     private:
-      Backend backend;
-      int getAtmo( vector<moltup> vals, Interval* interval );
-      double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d);
-      double deg2rad(double deg);
-      bool isNearestAirCleaner(AirCleaner ac, Sensor s);
 
+    Backend backend;
+    int getAtmo( vector<moltup> vals, Interval* interval );
+    double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d);
+    double deg2rad(double deg);
+    bool isNearestAirCleaner(AirCleaner ac, Sensor s);
 };
+
+
 
 #endif
