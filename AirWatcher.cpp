@@ -300,7 +300,7 @@ int AirWatcher::getAtmo( vector<moltup> vals, Interval* interval ){
   return maximum;
 }
 
-void AirWatcher::getSimilarSensors(string sensorId, string start, string end, double radius){
+void AirWatcher::getSimilarSensors(string sensorId, string start, string end, double radius, int tolerance){
 
   Interval* interval = getInterval(start,end);
   int duration = interval->endDate - interval->startDate; 
@@ -354,8 +354,7 @@ void AirWatcher::getSimilarSensors(string sensorId, string start, string end, do
   cout << "normal = ";
   printMoltup(normal);
   cout << endl;
-  
-  int tolerance = 10;
+
   int lower = 100 - tolerance;
   int upper = 100 + tolerance;
 
