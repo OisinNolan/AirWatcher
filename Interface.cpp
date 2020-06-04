@@ -48,7 +48,36 @@ int main(){
                 cout << "-------------------------------------\n";
                 AW.getImpact(airCleanerId);
                 break;
-            } 
+            }
+            case 3:
+                break;
+            case 4: {
+                string sensorId;
+                cout << "Enter Sensor ID: ";
+                cin >> sensorId;
+
+                string start;
+                cout << "When do you want to start the search? Enter start date: ";
+                cin >> start;
+
+                string end;
+                cout << "When do you want to end the search? Enter end date: ";
+                cin >> end;
+
+                double radius;
+                cout << "How far away from Sensor " << sensorId << " do you want to search? Enter radius: ";
+                cin >> radius;
+
+                int tolerance;
+                cout << "How similar should the Sensors be to Sensor " << sensorId << "? Enter a percentage: ";
+                cin >> tolerance;
+
+                cout << "\n Sensors that are similar to Sensor " << sensorId << ":\n";
+                cout << "-------------------------------------\n";
+                AW.getSimilarSensors(sensorId, start, end, radius, tolerance);
+                break;
+            }
+
             default:
                 cout << "You must choose a valid option." << endl;
                 goto fin;
