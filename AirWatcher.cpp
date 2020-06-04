@@ -393,3 +393,15 @@ AirWatcher::AirWatcher(){
   backend.loadSensorsFile();
   backend.loadAirCleaners();
 }
+
+void AirWatcher::listSensors() {
+  for(Sensor s : backend.Sensors) {
+    cout << s.toString() << endl;
+  }
+}
+
+void AirWatcher::listAirCleaners() {
+  for(auto& it : backend.airCleaners) {
+    cout << it.second.toString() << endl;
+  }
+}

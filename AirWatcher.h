@@ -67,6 +67,8 @@ class AirWatcher {
     void getImpact( string CleanerID );
     void getSimilarSensors( string sensorId, string start, string end, double radius, int tolerance );
     void getSimilarSensors();
+    void listSensors();
+    void listAirCleaners();
     AirWatcher();
 
     private:

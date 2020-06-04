@@ -39,6 +39,7 @@ int main(){
             case 0:
                 goto fin;
             case 1:
+                AW.listAirCleaners();
                 break;
             case 2: {
                 string airCleanerId;
@@ -50,6 +51,7 @@ int main(){
                 break;
             }
             case 3:
+                AW.listSensors();
                 break;
             case 4: {
                 string sensorId;
