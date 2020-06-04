@@ -1,41 +1,14 @@
-#include <iostream>
-#include <tuple>
-#include <vector>
-#include <map> 
-#include <set>
-#include <math.h>
-#include <cmath> 
 
-#include "Sensor.h"
-#include "AirCleaner.h"
-#include "Backend.h"
-#include "Zone.h"
-#include "Atmo.h"
 
 // Used to convert lat/long distance unit to km
-#define earthRadiusKm 6371.0
+
+#include "AirWatcher.h"
 
 using namespace std;
 
 // Here are some global stuff maybe we can make AirWatcher a real class 
 // and call everyting from a main one day 
 
-typedef tuple<double,double,double,double> moltup;
-
-inline void printMoltup(moltup m) {
-  cout << "(" << get<O3>(m) << ", " << get<SO2>(m) << ", " << get<NO2>(m) << ", " << get<PM10>(m) << ")";
-}
-
-Backend backend = Backend();
-
-struct _Interval{
-
-  int startDate;
-  int endDate;
-
-} typedef Interval;
-
-int getAtmo( vector<moltup> vals, Interval* interval );
 
 int convertDateInt( string date){
   
@@ -45,6 +18,16 @@ int convertDateInt( string date){
   int st = MonthDurations[stMonth-1] + stDay;
 
   return st;
+
+}
+
+Interval* getInterval( string start, string end ){
+
+  Interval* interval = new Interval;
+  interval->startDate = convertDateInt(start);
+  interval->endDate = convertDateInt(end);
+
+  return interval;
 
 }
 
@@ -88,11 +71,12 @@ string DecrementDayBy( string date, int i){
 }
 
 // Unit conversion function from https://stackoverflow.com/questions/10198985/calculating-the-distance-between-2-latitudes-and-longitudes-that-are-saved-in-a
-double deg2rad(double deg) {
-  return (deg * M_PI / 180);
+double AirWatcher::deg2rad(double deg) {
+  double result =(deg * M_PI / 180);
+  return result;
 }
 
-double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d) {
+double AirWatcher::distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d) {
   double lat1r, lon1r, lat2r, lon2r, u, v;
   lat1r = deg2rad(lat1d);
   lon1r = deg2rad(lon1d);
@@ -100,21 +84,14 @@ double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d) {
   lon2r = deg2rad(lon2d);
   u = sin((lat2r - lat1r)/2);
   v = sin((lon2r - lon1r)/2);
-  return 2.0 * earthRadiusKm * asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
+  double result = 2.0 * 6371.0 * asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
+  return result;
 }
 
-Interval* getInterval( string start, string end ){
 
-  Interval* interval = new Interval;
-  interval->startDate = convertDateInt(start);
-  interval->endDate = convertDateInt(end);
-
-  return interval;
-
-}
 
 // This function returns true if ac is the nearest AirCleaner to Sensor s, and false otherwise
-bool isNearestAirCleaner(AirCleaner ac, Sensor s) {
+bool AirWatcher::isNearestAirCleaner(AirCleaner ac, Sensor s) {
 
   double distAc = distanceEarth(ac.latitude, ac.longitude, s.latitude, s.longitude);
   
@@ -152,7 +129,7 @@ Pseudocode:
 
 */
 
-void getImpact( string cleanerID) {
+void AirWatcher::getImpact( string cleanerID) {
 
   AirCleaner AC = backend.airCleaners[cleanerID];
 
@@ -289,7 +266,7 @@ void getImpact( string cleanerID) {
 
 // This function takes a set of gas values and an interval of time
 // as parameters, and returns the ATMO index of those values in that time
-int getAtmo( vector<moltup> vals, Interval* interval ){
+int AirWatcher::getAtmo( vector<moltup> vals, Interval* interval ){
 
   // We calculate the average value for each gas in vals
   moltup avg;
@@ -323,28 +300,10 @@ int getAtmo( vector<moltup> vals, Interval* interval ){
   return maximum;
 }
 
-double getAverageAirQuality() {
+AirWatcher::AirWatcher(){
 
-}
-  
-
-
-
-
-
-int main() {
-  
-
-  //backend.loadDataFileBetween(AC1.start, "2019-02-03 12:00:00");
-
-  //backend.loadSensorsFile();
-
+  backend = Backend();
+  backend.loadDataFile();
+  backend.loadSensorsFile();
   backend.loadAirCleaners();
-
-  getImpact("AC2");
-
-  //backend.loadDataFileBetween(AC2.start,AC2.end);
-
-  return 0;
 }
-
