@@ -14,6 +14,7 @@ public:
     double latitude;
     double longitude;
     string description;
+    
     Sensor(string idParam, double latitudeParam, double longitudeParam, string descriptionParam)
     : id(idParam), latitude(latitudeParam), longitude(longitudeParam), description(descriptionParam)
     { }
