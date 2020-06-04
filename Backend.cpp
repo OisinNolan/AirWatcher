@@ -155,8 +155,6 @@ const int MAX_SENSORS_LINES = 100;
     {
         ifstream fichier(dataFile.c_str());
 
-        cout << dateFin << endl;
-
         if(fichier)
         {
 
@@ -206,6 +204,34 @@ const int MAX_SENSORS_LINES = 100;
           cout << "ERREUR: Impossible d'ouvrir le fichier en lecture." << endl;
           return false;
         }
+    }
+
+    // Ideally this would read AirCleaners from csv, but im just using the objects
+    // Aydin made for convenience here. If we have time we can parse the csv properly.
+    bool Backend::loadAirCleaners() {
+        // Here we get the AirCleaner data
+        AirCleaner AC1 = AirCleaner(
+        "AC1",
+        45.333333,
+        1.333333,
+        "2019-02-01 12:00:00",
+        "2019-03-01 00:00:00",
+        "AirCleaner1"
+        );
+
+        AirCleaner AC2 = AirCleaner(
+        "AC2",
+        46.666667,
+        3.666667,
+        "2019-02-01 12:00:00",
+        "2019-03-01 00:00:00",
+        "AirCleaner2"
+        );
+
+        // We populate a hashmap with cleanerId as key, corresponding object as value,
+        // for easy access.
+        airCleaners[AC1.cleanerId] = AC1;
+        airCleaners[AC2.cleanerId] = AC2;
     }
 
 

@@ -20,7 +20,7 @@ public:
         {}
 
     friend ostream& operator<<(ostream& os, const Data& d){
-         os << d.sensorId << "|" << d.type << "|" << d.value;
+         os << d.time << "|" << d.sensorId << "|" << d.type << "|" << d.value;
         return os;
     }
 

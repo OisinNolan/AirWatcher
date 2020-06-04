@@ -14,9 +14,11 @@
 
 #include <vector>
 #include <string>
+#include <unordered_map>
 #include "Zone.h"
 #include "Sensor.h"
 #include "Data.h"
+#include "AirCleaner.h"
 
 
 
@@ -40,6 +42,7 @@ public:
     // I will add proper getter later maybe ??
     vector<Sensor> Sensors;
     vector<Data> data;
+    unordered_map<string, AirCleaner> airCleaners;
 
     
     bool loadSensorsFile();
@@ -54,6 +57,8 @@ public:
     //
     //
     //
+
+    bool loadAirCleaners();
 
 
     bool loadDataFileBetween(string dateDebut, string dateFin =  "4019-12-31 12:00:01");

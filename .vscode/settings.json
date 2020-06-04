@@ -23,6 +23,11 @@
         "memory": "cpp",
         "ratio": "cpp",
         "system_error": "cpp",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "utility": "cpp",
+        "ostream": "cpp",
+        "array": "cpp",
+        "istream": "cpp",
+        "locale": "cpp"
     }
 }

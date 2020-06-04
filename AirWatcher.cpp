@@ -1,8 +1,8 @@
 #include <iostream>
 #include <tuple>
 #include <vector>
-#include <map>  
-
+#include <map> 
+#include <set>
 
 #include "Sensor.h"
 #include "AirCleaner.h"
@@ -17,25 +17,11 @@ using namespace std;
 
 typedef tuple<double,double,double,double> moltup;
 
+inline void printMoltup(moltup m) {
+  cout << "(" << get<O3>(m) << ", " << get<SO2>(m) << ", " << get<NO2>(m) << ", " << get<PM10>(m) << ")";
+}
+
 Backend backend = Backend();
-
-AirCleaner AC1 = AirCleaner(
-  "AC1",
-  45.333333,
-  1.333333,
-  "2019-02-01 12:00:00",
-  "2019-03-01 00:00:00",
-  "AirCleaner1"
-  );
-
-AirCleaner AC2 = AirCleaner(
-  "AC2",
-  46.666667,
-  3.666667,
-  "2019-02-01 12:00:00",
-  "2019-03-01 00:00:00",
-  "AirCleaner2"
-  );
 
 struct _Interval{
 
@@ -108,6 +94,27 @@ Interval* getInterval( string start, string end ){
 
 }
 
+// Returns the square of the distance from (x1,y1) to (x2,y2)
+inline double getDistanceSquared(double x1, double y1, double x2, double y2) {
+  return ((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
+}
+
+// This function returns true if ac is the nearest AirCleaner to Sensor s, and false otherwise
+bool isNearestAirCleaner(AirCleaner ac, Sensor s) {
+
+  double distAc = getDistanceSquared(ac.longitude, ac.latitude, s.longitude, s.latitude);
+  
+  for (auto& it : backend.airCleaners) {
+    AirCleaner otherAc = it.second;
+    double distOtherAc = getDistanceSquared(otherAc.longitude, otherAc.latitude, s.longitude, s.latitude);
+    if(distOtherAc < distAc) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /*
 
 Pseudocode:
@@ -132,25 +139,9 @@ Pseudocode:
 */
 
 
-void getImpact( string CleanerID) {
+void getImpact( string cleanerID) {
 
-  AirCleaner AC;
-  AirCleaner OtherC;
-
-  if( CleanerID == "AC1" ){
-     AC = AC1; 
-     OtherC = AC2;
-  }
-  else if( CleanerID == "AC2" ){
-    AC = AC2;
-    OtherC = AC1;
-  }
-  else{
-    cout << "CLEANER NOT FOUND" << endl;
-    return;
-  }
-
-  // 1. Calculate radiusen
+  AirCleaner AC = backend.airCleaners[cleanerID];
 
   backend.loadSensorsFile();
   
@@ -161,36 +152,29 @@ void getImpact( string CleanerID) {
   vector<Data> startVal;
   for( Data d : backend.data ) startVal.push_back(d);
 
-  cout << "------------------------------" << endl;
-
   backend.data = vector<Data>();
 
   // load values at the end of the duration
-  string endDate = AC.end.replace(11,2,"12"); // this is necessary because I want data from one day and because end date starts at 00:00:00 it complicates things
+  string endDate = AC.end.replace(11,2,"12"); 
   newDate = DecrementDayBy(AC.end,2);
   backend.loadDataFileBetween(newDate,endDate);
 
-  multimap<double,Sensor> concernedSensors;  // first int is distance between Sensor <-> Cleaner
-  multimap<string,moltup> deltaVals; // first string is Sensor.id
+  set<string> nearbySensorIds;
+  // This map associates each nearby sensor with the distance it is from AC
+  // It is stored in a multimap with dist as key so as the sort the nearby sensors by distance.
+  multimap<double,Sensor> nearbySensorDistance;
+  // This map associates sensorId with the change in gas value from the start of AC lifetime to the end
+  multimap<string,moltup> deltaVals;
 
-  // This vector will store tuples containing the gas values from the nearby 'concerned' sensors
-  // on the first day that the air cleaner exists.
-  vector<moltup> startGasVals;
-  // This vector will store such tuples from the final day that the air cleaner exists
-  vector<moltup> endGasVals;
-
+  // Here we find all the sensors to whom AC is the nearest AirCleaner
   for( Sensor s : backend.Sensors ){
 
-    double distAC = (AC.longitude - s.longitude)*(AC.longitude - s.longitude) + (AC.latitude - s.latitude)*(AC.latitude - s.latitude);
-    double distOC = (OtherC.longitude - s.longitude)*(OtherC.longitude - s.longitude) + (OtherC.latitude - s.latitude)*(OtherC.latitude - s.latitude);
-
-    if( distAC < distOC) 
+    // If AC is the nearest AirCleaner to s, then S is considered a 'concernedSensor'
+    // We store dist(AC, s) as well as the change in gas values between start and end of AirCleaner's life.
+    if(isNearestAirCleaner(AC, s)) 
     {
-      concernedSensors.insert(make_pair(distAC,s));     
+      nearbySensorDistance.insert(make_pair(getDistanceSquared(AC.longitude, AC.latitude, s.longitude, s.latitude),s));     
       int index = stoi(s.id)*4;
-      //cout << index << endl;
-      
-      //cout << startVal[index+O3].value << "-+-" << backend.data[index+O3].value << endl;
 
       moltup t = make_tuple(
           backend.data[index+O3].value - startVal[index+O3].value ,
@@ -201,11 +185,6 @@ void getImpact( string CleanerID) {
       deltaVals.insert(make_pair(s.id,t));
     } 
   }
-
-  cout << "|Distance|Id|O3|SO2|NO2|PM10|" << endl;
-  // we will traverse the sensors one by one sorted by their distance to cleaner
-  // distance is actually distance squared but no need to take its square root
-  // if we are using it to only sort but later to calculate the radius we'll need to
   
   // This boolean will be false until we find an appropriate cutoff point for our list of sensors.
   // Once it is true, the loop will stop and we can cut the rest of out list off.
@@ -215,7 +194,7 @@ void getImpact( string CleanerID) {
   // at this distance.
   int positiveDeltaStreak = 0;
 
-  for( multimap<double,Sensor>::iterator it = concernedSensors.begin(); it != concernedSensors.end(); ++it )
+  for( multimap<double,Sensor>::iterator it = nearbySensorDistance.begin(); it != nearbySensorDistance.end(); ++it )
   {
     Sensor s = it->second;
     moltup t = deltaVals.find(s.id)->second;
@@ -232,61 +211,75 @@ void getImpact( string CleanerID) {
     }
   }
 
-  concernedSensors.erase(cutoffIndex, concernedSensors.end());
+  nearbySensorDistance.erase(cutoffIndex, nearbySensorDistance.end());
 
-  for( multimap<double,Sensor>::iterator it = concernedSensors.begin(); it != concernedSensors.end(); ++it )
-  {
+  for( multimap<double,Sensor>::iterator it = nearbySensorDistance.begin(); it != nearbySensorDistance.end(); ++it ) {
     Sensor s = it->second;
-    int index = stoi(s.id)*4;
-    
-    moltup startGasVal = make_tuple(
-      startVal[index+O3].value ,
-      startVal[index+SO2].value,
-      startVal[index+NO2].value,
-      startVal[index+PM10].value
-    );
-    startGasVals.push_back(startGasVal);
-
-    moltup endGasVal = make_tuple(
-      backend.data[index+O3].value ,
-      backend.data[index+SO2].value,
-      backend.data[index+NO2].value,
-      backend.data[index+PM10].value
-    );
-    endGasVals.push_back(endGasVal);
+    nearbySensorIds.insert(s.id);
   }
 
-  // I am not really sure yet how to get the radius so 
-  // I'll assume we got the radius to continue
-  double radius;
-  string lastSensorId;
+  // The radius will be the distance between AC and the furthest away sensor
+  // which it has impacted. (The sensor at the end of nearbySensorDistance)
+  double radius = (--nearbySensorDistance.end())->first;
 
-  // not sure if we need a radius tbh 
-  // we can just cut off at certain point for the calculations
-  Zone zone = Zone(AC.latitude,AC.longitude,radius); // and don't really need this tbh
-
-  // we need all the data for ATMO
+  // We get the data from the ~month before the AirCleaner started
   backend.data.clear();
-  backend.loadDataFileBetween(AC.start,AC.end);
+  backend.loadDataFileBetween(DecrementDayBy(AC.start, 31),DecrementDayBy(AC.start, 1));
+  vector<Data> monthBeforeACData = backend.data;
+  vector<moltup> monthBeforeACVals;
 
-  Interval* interval = new Interval();
-  interval->startDate = 0;
-  interval->endDate = 1;
+  // We filter the data by considering only data from sensors within our radius.
+  // We add the values from the relevant data to a vector, for which we can calculate an ATMO index.
+  for(int i=0; i<monthBeforeACData.size()-4; i+=4) {
+    if(nearbySensorIds.find(monthBeforeACData[i].sensorId) != nearbySensorIds.end()) {
+      moltup vals = make_tuple(
+        monthBeforeACData[i+O3].value,
+        monthBeforeACData[i+SO2].value,
+        monthBeforeACData[i+NO2].value,
+        monthBeforeACData[i+PM10].value
+      );
+      monthBeforeACVals.push_back(vals);
+    }
+  }
 
-  int startAtmo = getAtmo(startGasVals,interval);
-  int endAtmo = getAtmo(endGasVals,interval);
+  Interval * beforeACInterval = getInterval(DecrementDayBy(AC.start, 31), DecrementDayBy(AC.start, 1));
+  int monthBeforeACAtmo = getAtmo(monthBeforeACVals, beforeACInterval);
 
-  cout << "ATMO Index at start of AirCleaner lifespan = " <<  startAtmo << endl;
-  cout << "ATMO Index at end of AirCleaner lifespan = " <<  endAtmo << endl;
+  // We get the data from the time that the AirCleaner was working
+  backend.data.clear();
+  backend.loadDataFileBetween(DecrementDayBy(AC.start, 1), AC.end);
+  vector<Data> monthDuringACData = backend.data;
+  vector<moltup> monthDuringACVals;
+
+  // We filter the data by considering only data from sensors within our radius.
+  // We add the values from the relevant data to a vector, for which we can calculate an ATMO index.
+  for(int i=0; i<monthDuringACData.size()-4; i+=4) {
+    if(nearbySensorIds.find(monthDuringACData[i].sensorId) != nearbySensorIds.end()) {
+      moltup vals = make_tuple(
+        monthDuringACData[i+O3].value,
+        monthDuringACData[i+SO2].value,
+        monthDuringACData[i+NO2].value,
+        monthDuringACData[i+PM10].value
+      );
+      monthDuringACVals.push_back(vals);
+    }
+  }
+
+  Interval * duringACInterval = getInterval(DecrementDayBy(AC.start, 1), AC.end);
+  int monthDuringACAtmo = getAtmo(monthDuringACVals, duringACInterval);
+
+  cout << "ATMO for month before AirCleaner = " << monthBeforeACAtmo << endl;
+  cout << "ATMO for month during AirCleaner = " << monthDuringACAtmo << endl;
+
 }
 
+// This function takes a set of gas values and an interval of time
+// as parameters, and returns the ATMO index of those values in that time
 int getAtmo( vector<moltup> vals, Interval* interval ){
 
+  // We calculate the average value for each gas in vals
   moltup avg;
-
-  // Actually we can pass a addes vector but oh well
   for( moltup t : vals ){
-    cout << get<O3>(t) << endl;
     get<O3>(avg) += get<O3>(t);
     get<SO2>(avg) += get<SO2>(t);
     get<NO2>(avg) += get<NO2>(t);
@@ -294,23 +287,12 @@ int getAtmo( vector<moltup> vals, Interval* interval ){
       
   }
 
-  int dur = interval->endDate - interval->startDate;
-
-  cout << get<O3>(avg) << " dur = " << dur << endl;
-
-  // (vals.size) * (interval.duration) == (no. days in timespan) * (no. sensors whose data is in vals)
-  // Because of this we must divide by both vals.size() and interval.duration.
-
   get<O3>(avg) = get<O3>(avg)/vals.size();
   get<SO2>(avg) = get<SO2>(avg)/vals.size();
   get<NO2>(avg) = get<NO2>(avg)/vals.size();
   get<PM10>(avg) = get<PM10>(avg)/vals.size();
 
-  get<O3>(avg) = get<O3>(avg)/dur;
-  get<SO2>(avg) = get<SO2>(avg)/dur;
-  get<NO2>(avg) = get<NO2>(avg)/dur;
-  get<PM10>(avg) = get<PM10>(avg)/dur;
-
+  // We get an index for each gas, using a helper function getIndex()
   int index[4] = 
   {
     getIndex(O3,get<O3>(avg)),
@@ -319,14 +301,12 @@ int getAtmo( vector<moltup> vals, Interval* interval ){
     getIndex(PM10,get<O3>(avg)),
   };
 
+  // We return the maximum of those indices -- this is our ATMO index
   int maximum = index[0];
-
-  for( int i=0; i<4; i++ ){
-    
-    if(  index[i] > maximum ) maximum = index[i];
+  for( int i=0; i<4; i++ ) {
+    if( index[i] > maximum ) maximum = index[i];
   } 
   return maximum;
-
 }
 
 double getAverageAirQuality() {
@@ -344,6 +324,8 @@ int main() {
   //backend.loadDataFileBetween(AC1.start, "2019-02-03 12:00:00");
 
   //backend.loadSensorsFile();
+
+  backend.loadAirCleaners();
 
   getImpact("AC2");
 
