@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <string>
+#include <chrono> 
 
 #include "AirWatcher.h"
 
@@ -38,21 +39,35 @@ int main(){
         {
             case 0:
                 goto fin;
-            case 1:
+            case 1:{
+                auto start = chrono::high_resolution_clock::now(); 
                 AW.listAirCleaners();
+                auto stop = chrono::high_resolution_clock::now(); 
+                auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start); 
+                cout << "Execution time = " <<duration.count() << " milliseconds" << endl; 
                 break;
+                }
             case 2: {
                 string airCleanerId;
                 cout << "Enter AirCleaner ID: ";
                 cin >> airCleanerId;
                 cout << "\nImpact of AirCleaner " << airCleanerId << ":\n";
                 cout << "-------------------------------------\n";
+                auto start = chrono::high_resolution_clock::now(); 
                 AW.getImpact(airCleanerId);
+                auto stop = chrono::high_resolution_clock::now(); 
+                auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start); 
+                cout << "Execution time = " <<duration.count() << " milliseconds" << endl; 
                 break;
             }
-            case 3:
+            case 3:{
+                auto start = chrono::high_resolution_clock::now(); 
                 AW.listSensors();
+                auto stop = chrono::high_resolution_clock::now(); 
+                auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start); 
+                cout << "Execution time = " <<duration.count() << " milliseconds" << endl; 
                 break;
+            }
             case 4: {
                 string sensorId;
                 cout << "Enter Sensor ID: ";
@@ -76,7 +91,11 @@ int main(){
 
                 cout << "\n Sensors that are similar to Sensor " << sensorId << ":\n";
                 cout << "----------------------------------------\n";
+                 auto startT = chrono::high_resolution_clock::now(); 
                 AW.getSimilarSensors(sensorId, start, end, radius, tolerance);
+                auto stop = chrono::high_resolution_clock::now(); 
+                auto duration = chrono::duration_cast<chrono::milliseconds>(stop - startT); 
+                cout << "Execution time = " <<duration.count() << " milliseconds" << endl; 
                 break;
             }
 
