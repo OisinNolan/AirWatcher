@@ -126,8 +126,6 @@ const int MAX_SENSORS_LINES = 100;
                 string c = ligne.substr(0,ligne.find(';'));
                 ligne.erase(0, ligne.find(";")+1);
 
-
-
                 Data d(date, id, molecule, stod(c));
                 data.push_back(d);
 
