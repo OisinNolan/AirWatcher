@@ -28,6 +28,7 @@
         "ostream": "cpp",
         "array": "cpp",
         "istream": "cpp",
-        "locale": "cpp"
+        "locale": "cpp",
+        "*.tcc": "cpp"
     }
 }

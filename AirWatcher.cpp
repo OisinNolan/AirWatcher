@@ -300,6 +300,93 @@ int AirWatcher::getAtmo( vector<moltup> vals, Interval* interval ){
   return maximum;
 }
 
+void AirWatcher::getSimilarSensors(string sensorId, string start, string end, double radius){
+
+  Interval* interval = getInterval(start,end);
+  int duration = interval->endDate - interval->startDate; 
+  cout << "Duration =" << duration << " Radius =" << radius  << endl;
+
+
+  backend.data.clear(); // we should just put this in the backend
+  backend.Sensors.clear();
+  backend.loadSensorsFile();
+  backend.loadDataFileBetween(start,end);
+  
+  Sensor sensor = backend.Sensors[stoi(sensorId)]; 
+
+  Zone zone = Zone(sensor.latitude,sensor.longitude,radius);
+
+  map<int,moltup> avgVals;
+
+  // we get the average values for each molecule type in a given zone in a given interval
+  for( Sensor s:backend.Sensors){
+
+    if( zone.IsWithin( s.latitude, s.longitude )){
+
+      int sensorIndex = stoi(s.id);
+      moltup t = make_tuple(0.0,0.0,0.0,0.0);
+
+      //cout << sensorIndex << endl;
+      for( int i= sensorIndex*4; i < sensorIndex*4+ duration*4; i +=4 ){
+        get<O3>(t) += backend.data[i+O3].value;
+        get<SO2>(t) += backend.data[i+SO2].value;
+        get<NO2>(t) += backend.data[i+NO2].value;
+        get<PM10>(t) += backend.data[i+PM10].value;
+      }
+      
+      get<O3>(t) = get<O3>(t)/duration;
+      get<SO2>(t) =  get<SO2>(t)/duration;
+      get<NO2>(t) = get<NO2>(t)/duration; 
+      get<PM10>(t) = get<PM10>(t)/duration;
+
+      avgVals.insert(make_pair(sensorIndex,t));
+      /*
+      cout << sensorIndex << "-";
+      printMoltup(t); 
+      cout << endl;
+      */
+    }
+  }
+
+  // we normalize with the values of the sensor we chose
+
+  moltup normal = avgVals.find(stoi(sensorId))->second;
+  cout << "normal = ";
+  printMoltup(normal);
+  cout << endl;
+  
+  int tolerance = 10;
+  int lower = 100 - tolerance;
+  int upper = 100 + tolerance;
+
+  for( map<int,moltup>::iterator it = avgVals.begin() ; it !=avgVals.end(); ++it ){
+    
+    if( it->first == stoi(sensorId) ) continue;
+
+
+
+    moltup t = it->second;
+    
+    get<O3>(t) = get<O3>(t)/get<O3>(normal)*100;
+    get<SO2>(t) =  get<SO2>(t)/get<SO2>(normal)*100;
+    get<NO2>(t) = get<NO2>(t)/get<NO2>(normal)*100; 
+    get<PM10>(t) = get<PM10>(t)/get<PM10>(normal)*100;
+
+    if(
+      get<O3>(t) >= lower && get<O3>(t) <= upper &&
+      get<SO2>(t) >= lower && get<SO2>(t) <= upper &&
+      get<NO2>(t) >= lower && get<NO2>(t) <= upper &&
+      get<PM10>(t) >= lower && get<PM10>(t) <= upper
+    )
+      {
+        cout << it->first << "-";
+        printMoltup(t); 
+        cout << endl;
+      }
+    
+  } 
+}
+
 AirWatcher::AirWatcher(){
 
   backend = Backend();
